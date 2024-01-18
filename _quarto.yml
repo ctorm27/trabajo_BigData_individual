@@ -1,0 +1,79 @@
+project:                
+  type: website          
+  output-dir: docs       
+  
+website:
+  title: "Aterrizajes Meteoríticos"       
+  favicon: imagenes/nasa1.jpeg     
+  site-url: https://ctorm27.github.io/trabajo_BigData_individual/   
+  repo-url: https://github.io/ctorm27/trabajo_BigData_individual
+  search:   
+    location: navbar
+    type: overlay   
+    copy-button: true
+  navbar:
+    logo: "imagenes/nasa2.png"          
+    #background: "#444444"    
+    #foreground: "#FF0000"    
+    left: 
+      - icon: house-door
+        href: index.html
+    right:
+      - text: "Trabajo individual"   
+        href: my_trabajo_BigData.qmd   
+        target: _blank
+      - icon: github
+        href: https://github.com/ctorm27    
+      - icon: envelope
+        url: "mailto:tordela@alumni.uv.es"           
+  page-footer:
+    border: true
+    background: "#00FFFF"     
+    left: "© 2023 Cristina Tormos"   
+    center: "Hecho con [Quarto](https://quarto.org)"
+    right:
+      - icon: github
+        href: https://github.com/ctorm27    
+      - icon: envelope
+        url: "mailto:tordela@alumni.uv.es"          
+    
+format:
+  html:
+    theme: cyborg         
+    mainfont: Lato
+    highlight-style: a11y   
+    css: my_styles.css      
+    page-layout: full
+    toc: true
+    toc-location: left
+    toc-title: "Índice"
+    code-copy: true
+    code-overflow: wrap    
+    code-fold: show
+    code-line-numbers: true
+
+# Enable CC licence appendix
+#license: "CC BY"
+
+lang: es  
+
+# Default execute options
+execute:
+  echo: true
+  message: false
+  warning: false
+  eval: true
+  #fig-align: left
+
+
+#- Default knitr options
+knitr:
+  opts_chunk: 
+    collapse: true
+    comment: "#>" 
+    fig.asp:  7/9
+    out.width: "95%"
+    fig.align: "left"
+    fig.show: "hold"
+    R.options:
+      options(scipen = 999)  

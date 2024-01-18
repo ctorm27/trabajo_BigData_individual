@@ -1,0 +1,742 @@
+---
+title: "Aterrizajes Meteoríticos"
+description: |
+  Usando datos extraídos de los registros de la NASA: [Datos](https://catalog.data.gov/dataset/meteorite-landings)
+author: 
+    - name: Cristina Tormos (tordela@alumni.uv.es)
+date: 01-19-2024
+categories: [trabajo Big Data]
+image: imagenes/nasa1.jpeg
+about: 
+  template: marquee
+  image-width: 16em 
+  image-shape: rounded
+  links: 
+    - icon: github
+      text: Github
+      href: https://github.com/ctorm27
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    fig_caption: true
+    code_folding: hide
+    code-tols: true
+    code-link: true
+    css: my_styles.css
+---
+
+## Introducción ☄️
+
+Lo primero a considerar en este trabajo es: ¿Qué es un meteorito? Pues bien, un meteorito es un meteoroide que alcanza la superficie de un planeta debido a que no se desintegra por completo en la atmósfera. La luminosidad dejada al desintegrarse se denomina meteoro.
+
+![ Diferentes tipos de meteoritos (SPMNTwitter)](https://s3.ppllstatics.com/canarias7/www/multimedia/202212/01/media/cortadas/meteoro-kmiF-U180902589505JOI-1248x770@Canarias7.jpg)
+
+Por tanto, los aterrizajes meteoríticos son fenómenos fascinantes que han dejado su huella en la historia y han desencadenado preguntas fundamentales sobre el origen del sistema solar y la composición del cosmos.
+
+En este trabajo, nos sumergiremos en datos sobre meteoritos que revelan mucho más que simples estadísticas.Vamos a explorar información clave como nombres, tipos, masas, fechas y ubicaciones geográficas de los meteoritos, utilizando métodos eficientes de procesamiento de datos. 
+
+Los datos y paquetes necesarios se pueden cargar en la memoria de R/RStudio con este código:
+
+```{r}
+#| code-fold: true
+
+#Instalar packages necesarios
+#pkgs_a_instalar <- c("tidyverse", "terra", "ggplot2", "plotly", "ggmap", "maps", "mapdata", "Hmisc", "sf", "lubridate", "readr", "data.table", "leaflet", "raster", "rgeos", "dplyr", "kableExtra", "gt", "gtExtras", "gridExtra", "gganimate", "DT", "ggthemes", "viridis","rnaturalearth")
+
+#Cargar librerías necesarias
+library(tidyverse) 
+library(terra) 
+library(ggplot2)
+library(plotly)
+library(ggmap)
+library(maps)
+library(mapdata)
+library(Hmisc)
+library(sf)
+library(lubridate)
+library(readr)
+library(data.table)
+library(leaflet)
+library(raster)
+library(dplyr)
+library(kableExtra)
+library(gt)
+library(gtExtras)
+library(gridExtra)
+library(gganimate)
+library(DT)
+library(ggthemes)
+library(viridis)
+library(rnaturalearth)
+
+#Cargar los datos desde el archivo CSV
+file_path <- "Meteorite_Landings.csv"
+df <- read.csv(file_path, stringsAsFactors = FALSE)
+str(df)
+
+```
+
+## Trabajemos con los datos 📂
+
+En esta sección, nos sumergiremos en la exploración de los datos trabajando con la información recopilada en el DataFrame. 
+
+### Tipos de meteoritos 🔎
+
+Podemos observar que tenemos dos tipos de meteoritos: 
+
+1.**Válido** (*Valid*): que se refiere a un meteorito típico.
+
+2.**Relicto** (*Relict*): indica un meteorito que ha sido altamente degradado por las condiciones climáticas en la Tierra.
+
+Ahora pues, contabilizaremos la cantidad de cada tipo y lo mostraremos en una tabla:
+
+```{r}
+#| code-fold: true
+
+#Seleccionar variable 
+tabla1 <- table(df$nametype)
+
+#Adjudicar
+Tipos <- data.frame(Tipo = names(tabla1), Cantidad = as.numeric(tabla1))
+
+#Crear tabla
+knitr::kable(Tipos) %>%
+  kableExtra::kable_styling(full_width = F) %>%
+  column_spec(1, bold = T, border_right = T) %>%
+  row_spec(1:2, bold = T, color = "black",  background = "white")
+
+```
+Esto muestra una tabla que indica que hay 75 meteoritos de tipo "Relicto" y 45641 meteoritos de tipo "Válido".
+
+### Tipos de observaciones 🔭
+
+Podemos observar que tenemos dos tipos de observaciones: 
+
+1.**Caído** (*Fell*): indica que la caída del meteorito fue observada.
+
+2.**Encontrado** (*Found*): señala que la caída del meteorito no fue observada.
+
+```{r}
+#| code-fold: true
+
+#Seleccionar variable
+tabla2 <- table(df$fall)
+
+#Adjudicar
+Observaciones <- data.frame(Observaciones = names(tabla2), Cantidad = as.numeric(tabla2))
+
+#Crear
+knitr::kable(Observaciones) %>%
+  kableExtra::kable_styling(full_width = F) %>%
+  column_spec(1, bold = T, border_right = T) %>%
+  row_spec(1:2, bold = T, color = "black",  background = "white")
+
+```
+Esta tabla nos dice que hay 1107 observaciones de meteoritos que fueron vistos al caer y 44609 observaciones de meteoritos que fueron encontrados sin haber sido observados al caer.
+
+### Masa del meteorito ⚖️
+
+Ahora queremos revisar la lista de meteoritos y saber cual es su masa en promedio.
+
+```{r}
+#| code-fold: true
+
+#Seleccionar variable
+tabla3 <- summary(df$mass)
+
+#Adjudicar y crear cuartiles
+Masa <- data.frame(
+  Estadística = c("Min.", "Primer cuartil", "Mediana", "Media", "Tercer cuartil.", "Max.", "NA's"),
+  Valor = as.numeric(tabla3)
+)
+
+#Crear tabla
+knitr::kable(Masa) %>%
+  kableExtra::kable_styling(full_width = F) %>%
+  column_spec(1, bold = T, border_right = T) %>%
+  row_spec(1:nrow(Masa), bold = T, color = "black", background = "white")
+
+```
+
+
+De este análisis obtenemos la siguiente información (expresada en gramos): 
+
+· El peso mínimo es de 0.
+
+· Un 25% de los meteoritos pesan 7 o menos.
+
+· La mediana es 33, lo que nos sugiere que muchos meteoritos son relativamente ligeros.
+
+·El promedio es 13280, así que hay algunos meteoritos realmente grandes en los datos.
+
+·El 75% de los meteoritos pesan 203 o menos.
+
+·El más pesado es masivo, con un peso de 60000000.
+
+·Además tenemos, 131 casos sin información sobre su masa.
+
+
+### Clase y  grupo del meteorito 👽
+
+La notación de "*recclass*" suele seguir un sistema alfanumérico que indica la clase y el grupo del meteorito. Esta información proporciona detalles sobre la composición y características del meteorito basándose en su análisis. Cada tipo de meteorito puede tener su propia clasificación basada en la información recopilada durante la investigación científica. 
+
+```{r}
+#| code-fold: true
+
+#Seleccionar variable
+tabla4 <- table(df$recclass)
+
+#Adjudicar
+Recclass <- data.frame(Recclass = names(tabla4), Frecuencia = as.numeric(tabla4))
+
+#Mejorar
+filas_por_grupo <- 10
+
+grupos_recclass <- split(Recclass, rep(1:(ceiling(nrow(Recclass) / filas_por_grupo)), each = filas_por_grupo, length.out = nrow(Recclass)))
+
+#Creaar tabla
+tabla_interactiva <- datatable(
+  Recclass,
+  options = list(
+    paging = TRUE,
+    pageLength = filas_por_grupo,
+    lengthMenu = c(filas_por_grupo, 2 * filas_por_grupo, 3 * filas_por_grupo),
+    info = FALSE
+  ),
+  colnames = c("Recclass", "Frecuencia"),
+  caption = "Tabla de Clases de Recclass",
+) %>%
+  formatStyle(
+    'Recclass',
+    backgroundColor = 'white',
+    color = 'black'
+  ) %>%
+  formatStyle(
+    'Frecuencia',
+    backgroundColor = 'white',
+    color = 'black'
+)
+
+#Mostrar tabla
+tabla_interactiva
+```
+
+De esta tabla podemos concluir que hay 466 tipos de *recclass*.
+
+### Años en que sucedió el aterrizaje 🌏
+
+En esta sección vamos a ver en que años cayeron los meteoritos.
+
+
+```{r}
+#| code-fold: true
+
+#Seleccionar variable
+tabla5 <- table(df$year)
+
+#Adjudicar
+Year <- data.frame(Year = names(tabla5), Cantidad = as.numeric(tabla5))
+
+#Mejorar
+filas_por_grupo_year <- 10
+
+grupos_year <- split(Year, rep(1:(ceiling(nrow(Year) / filas_por_grupo_year)), each = filas_por_grupo_year, length.out = nrow(Year)))
+
+# Crear tabla
+tabla_interactiva_year <- datatable(
+  Year,
+  options = list(
+    paging = TRUE,
+    pageLength = filas_por_grupo_year,
+    lengthMenu = c(filas_por_grupo_year, 2 * filas_por_grupo_year, 3 * filas_por_grupo_year),
+    info = FALSE
+  ),
+  colnames = c("Año", "Cantidad"),
+  caption = "Tabla de Años"
+) %>%
+  formatStyle(
+    'Year',  # Corregir aquí el nombre de la columna
+    backgroundColor = 'white',
+    color = 'black'
+  ) %>%
+  formatStyle(
+    'Cantidad',
+    backgroundColor = 'white',
+    color = 'black'
+  )
+
+#Mostrar tabla
+tabla_interactiva_year
+
+```
+
+De esta tabla podemos concluir que muchos años han aterrizado meteoritos en la tierra, normalmente 1 o 2 por año. Sin embargo, si filtramos la lista para mostrar los 5 años con más aterrizajes de meteoritos:
+
+```{r}
+#| code-fold: true
+
+#Adjudicar
+cuenta <- df %>%
+  group_by(year) %>%
+  summarise(Cantidad = n())
+
+#Filtrar
+top5 <- cuenta %>%
+  arrange(desc(Cantidad)) %>%
+  slice(1:5)
+
+#Crear tabla
+knitr::kable(top5) %>%
+  kableExtra::kable_styling(full_width = F) %>%
+  column_spec(2, bold = T, border_right = T) %>%
+  row_spec(1:5, bold = T, color = "black", background = "white")
+
+```
+Con esta tabla, observamos que los años más destacables serían: 2003, 1979, 1998,2006 y 1988.
+
+## Análisis gráfico 📈
+
+Ahora que ya tenemos la extracción de información de los datos, podemos hacer diversos análisis gráficos.
+
+### Top 5 🏆
+
+Puesto que acabamos de encontrar los 5 años con más aterrizajes meteoritícos, podemos verlo más claramente con un gráfico de barras:
+
+```{r}
+#| code-fold: true
+
+#Crear gráfico
+ggplot(top5, aes(x = Cantidad, y = as.factor(year))) +
+  geom_bar(stat = "identity", fill = c("blue1", "brown1", "olivedrab1", "magenta1", "yellow")) +
+  geom_text(aes(label = Cantidad), hjust = -0.1, vjust = 0.5, color = "black", size = 3, fontface = "bold") +
+  labs(title = "Top 5 años con más meteoritos",
+       x = "Cantidad de meteoritos",
+       y = "Año") +
+  theme_minimal()
+
+```
+
+### Densidad de Masa de Meteoritos 🕳️
+
+En este análisis nos enfocamos en la densidad de masa de meteoritos, utilizando información sobre la masa, el tipo de meteorito (nametype), y si el meteorito tuvo una caída visible o no(fall). El objetivo es comprender la distribución de la masa y cómo varía según el tipo de meteorito y la ocurrencia de una caída.
+
+El análisis de la densidad de masa de los meteoritos es crucial para desentrañar la historia y composición de nuestro sistema solar. Proporciona valiosa información sobre los procesos de formación de estos cuerpos celestes, contribuyendo a nuestra comprensión de la diversidad y evolución de los objetos presentes en el espacio. Este estudio es esencial para revelar los misterios detrás de la génesis y desarrollo de planetas, asteroides y otros cuerpos celestes.
+
+::: {.panel-tabset}
+
+#### Según el Tipo de Meteorito
+
+```{r}
+#| code-fold: true
+
+#Seleccionar
+df$masa <- df$mass..g. + 1e-6 
+
+#Definir
+df$log_masa <- log10(df$masa)
+
+#Filtrar
+df_filtered <- df[is.finite(df$log_masa), ]
+
+#Crear gráfico
+ggplot(df_filtered, aes(x = log_masa, fill = nametype)) +
+  geom_density(alpha = 0.5) +
+  labs(x = "Logaritmo en base 10 de Masa", y = "Densidad", title = "Densidad de Masa según Tipo de Meteorito") +
+  theme_minimal()
+
+```
+
+#### Según el tipo de Caída.
+
+```{r}
+#| code-fold: true
+
+#Crear gráfico
+ggplot(df_filtered, aes(x = log_masa, fill = fall)) +
+  geom_density(alpha = 0.5) +
+  labs(x = "Logaritmo en base 10 de Masa", y = "Densidad", title = "Densidad de Masa según Variable 'fall'") +
+  theme_minimal()
+
+```
+:::
+
+A través de estos gráficos de densidad, hemos obtenido insights visuales sobre la distribución de masa de los meteoritos en relación con el tipo y la ocurrencia de caídas. 
+
+### Visualización de Meteoritos a lo Largo de los Siglos 👀
+
+Estos gráficos y animaciones visualizan la cantidad de meteoritos registrados a lo largo del tiempo, clasificados por siglo. Proporcionan una perspectiva histórica y comparativa de los eventos meteoríticos desde el siglo XIX hasta principios del siglo XXI.
+
+```{r}
+#| code-fold: true
+
+#Filtrar y adjudicar
+dfyear <- df %>%
+  mutate(siglo = case_when(
+    year >= 1800 & year < 1900 ~ "XIX",
+    year >= 1900 & year < 2000 ~ "XX",
+    year >= 2000 ~ "XXI"
+  )) %>%
+  group_by(year, siglo) %>%
+  summarise(Cantidad_Meteoritos = n(), .groups = 'drop', na.rm = TRUE)
+
+```
+
+
+::: {.panel-tabset}
+
+#### Siglo XXI
+```{r}
+#| code-fold: true
+
+#Crear gráfico
+plot_XXI <- ggplot(dfyear[dfyear$siglo == "XXI", ], aes(x = year, y = Cantidad_Meteoritos)) +
+  geom_line() +
+  labs(title = "Siglo XXI", x = "Año", y = "Cantidad de Meteoritos")+
+  theme_bw()
+
+#Mostrar gráfico
+plot_XXI
+```
+
+#### Siglo XX
+```{r}
+#| code-fold: true
+
+#Crear gráfico
+plot_XX <- ggplot(dfyear[dfyear$siglo == "XX", ], aes(x = year, y = Cantidad_Meteoritos)) +
+  geom_line() +
+  labs(title = "Siglo XX", x = "Año", y = "Cantidad de Meteoritos")+
+  theme_bw()
+
+#Mostrar gráfico
+plot_XX
+```
+
+#### Siglo XIX
+```{r}
+#| code-fold: true
+
+#Crear gráfico
+plot_XIX <- ggplot(dfyear[dfyear$siglo == "XIX", ], aes(x = year, y = Cantidad_Meteoritos)) +
+  geom_line() +
+  labs(title = "Siglo XIX", x = "Año", y = "Cantidad de Meteoritos") +
+  theme_bw()
+
+#Mostrar gráfico
+plot_XIX
+```
+
+:::
+
+Con estos gráficos podemos observar la tendencia y cambios a lo largo del tiempo.
+
+Para observar la tendencia desde 1800 hasta 2030:
+
+```{r}
+#| code-fold: true
+
+#Crear gráfico
+ggplot(dfyear, aes(x = year, y = Cantidad_Meteoritos, color = siglo)) +
+  geom_line() +
+  labs(title = "Cantidad de Meteoritos por Año y Siglo", x = "Año", y = "Cantidad de Meteoritos") +
+  scale_color_manual(values = c("XIX" = "blue", "XX" = "orange", "XXI" = "purple")) +
+  xlim(1800, 2030) +
+  theme_bw()
+
+```
+Este gráfico une cada siglo, permitiendo una comparación directa de las cantidades de meteoritos entre los siglos. Cada siglo está representado por un color, resaltando las diferencias y similitudes en los patrones observados.
+
+Podemos observar que en los últimos 50 años, ha surgido una tendencia marcada en el aumento de aterrizajes de meteoritos, revelando un fenómeno fascinante. Este incremento puede atribuirse a avances tecnológicos significativos que han ampliado la capacidad de observación y detección de eventos espaciales, así como a una mayor conciencia pública que ha impulsado el reporte y registro de tales eventos. La eliminación de barreras geográficas y la rápida difusión de información a través de medios digitales también han contribuido a esta tendencia.
+
+### Distribución Interactiva de Meteoritos (2007): Cuartil de Masa por Observación y Validez 🌌
+
+En el análisis de meteoritos observados y validados durante el año 2007, se exploró la distribución de masas en relación con sus cuartiles correspondientes. Este conjunto de datos filtrado incluye únicamente meteoritos clasificados como "Valid" y que fueron observados y encontrados. El objetivo es visualizar la distribución de las masas de meteoritos en el tercer cuartil y proporcionar información detallada al interactuar con los puntos del gráfico.
+
+Se ha seleccionado un año concreto y se han filtrado los datos para reducir el número excesivo de observaciones y así conseguir una mejor visualización, separando, además por Cuartiles.
+
+::: {.panel-tabset}
+#### Cuartil 1
+```{r}
+#| code-fold: true
+
+#Filtrar
+df_filtered1 <- df %>%
+  filter(nametype == "Valid" & fall == "Found" & !is.na(mass..g.) & year == 2007) %>%
+  mutate(cuartil_masa = cut(mass..g., breaks = quantile(mass..g., c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE), labels = FALSE)) %>% filter(cuartil_masa == 1)
+
+#Crear gráfico
+gg1 <- ggplot(df_filtered1, aes( x = mass..g., y = cuartil_masa, color = name)) +
+  geom_point(alpha = 0.7, size = 2) +
+  labs(title = "Distribución de Masas del Cuartil 1",
+       x = "Masa del Meteorito", y = "Cuartiles de Masa") +
+  scale_color_viridis(discrete = TRUE) +
+  theme_minimal()+
+  theme(legend.position = "none")+
+  theme(axis.text = element_text(size = 5))
+
+#Mostrar gráfico
+ggplotly(gg1, tooltip = "all", height = 400)
+```
+#### Cuartil 2
+```{r}
+#| code-fold: true
+
+#Filtrar
+df_filtered2 <- df %>%
+  filter(nametype == "Valid" & fall == "Found" & !is.na(mass..g.) & year == 2007) %>%
+  mutate(cuartil_masa = cut(mass..g., breaks = quantile(mass..g., c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE), labels = FALSE)) %>% filter(cuartil_masa == 2)
+
+#Crear gráfico
+gg2 <- ggplot(df_filtered2, aes( x = mass..g., y = cuartil_masa, color = name)) +
+  geom_point(alpha = 0.7, size = 2) +
+  labs(title = "Distribución de Masas del Cuartil 2",
+       x = "Masa del Meteorito", y = "Cuartiles de Masa") +
+  scale_color_viridis(discrete = TRUE) +
+  theme_minimal()+
+  theme(legend.position = "none")+
+  theme(axis.text = element_text(size = 5))
+
+#Mostrar gráfico
+ggplotly(gg2, tooltip = "all", height = 400)
+```
+
+#### Cuartil 3
+```{r}
+#| code-fold: true
+
+#Filtrar
+df_filtered3 <- df %>%
+  filter(nametype == "Valid" & fall == "Found" & !is.na(mass..g.) & year == 2007) %>%
+  mutate(cuartil_masa = cut(mass..g., breaks = quantile(mass..g., c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE), labels = FALSE)) %>% filter(cuartil_masa == 3)
+
+#Crear gráfico
+gg3 <- ggplot(df_filtered3, aes( x = mass..g., y = cuartil_masa, color = name)) +
+  geom_point(alpha = 0.7, size = 2) +
+  labs(title = "Distribución de Masas del Cuartil 3",
+       x = "Masa del Meteorito", y = "Cuartiles de Masa") +
+  scale_color_viridis(discrete = TRUE) +
+  theme_minimal()+
+  theme(legend.position = "none")+
+  theme(axis.text = element_text(size = 6))
+
+#Mostrar gráfico
+ggplotly(gg3, tooltip = "all", height = 400)
+```
+
+#### Cuartil 4
+```{r}
+#| code-fold: true
+
+#Filtrar
+df_filtered4 <- df %>%
+  filter(nametype == "Valid" & fall == "Found" & !is.na(mass..g.) & year == 2007) %>%
+  mutate(cuartil_masa = cut(mass..g., breaks = quantile(mass..g., c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE), labels = FALSE)) %>% filter(cuartil_masa == 4)
+
+#Crear gráfico
+gg4 <- ggplot(df_filtered4, aes( x = mass..g., y = cuartil_masa, color = name)) +
+  geom_point(alpha = 0.7, size = 2) +
+  labs(title = "Distribución de Masas del Cuartil 4",
+       x = "Masa del Meteorito", y = "Cuartiles de Masa") +
+  scale_color_viridis(discrete = TRUE) +
+  theme_minimal()+
+  theme(legend.position = "none")+
+  theme(axis.text = element_text(size = 5))
+
+#Mostrar gráfico
+ggplotly(gg4, tooltip = "all", height = 400)
+```
+:::
+
+#### Para una visualización conjunta: 
+
+```{r}
+#| code-fold: true
+
+#Crear gráfico conjunto
+gg <- grid.arrange(gg1, gg2, gg3, gg4, ncol = 2)
+```
+
+## Mapas 🗺️
+
+Ahora con estos mapas intentaremos trazar la geografía de estos eventos celestes, mostrando dónde exactamente se han encontrado estos meteoritos.
+
+### Distribución Meteoritos Aterrizados 🌏
+
+En esta sección, exploraremos la distribución geográfica de los meteoritos aterrizados. El mapa proporcionará una visualización general de las ubicaciones donde se han encontrado estos eventos celestes a lo largo del tiempo.
+
+```{r}
+#| code-fold: true
+
+#Cargar
+world <- map_data('world')
+
+#Crear mapa
+mundo <- map_data('world')
+head(mundo)
+ggplot() +
+  geom_polygon(data=world, aes(x=long, y=lat, group=group)) +
+  geom_point(data=df, aes(x=reclong, y=reclat), col='purple', alpha=.2)
+```
+
+### Distribución Meteoritos Aterrizados según Tipo y Masa 🌍
+
+En esta sección, exploraremos la distribución geográfica de los meteoritos aterrizados, teniendo en cuenta tanto el tipo como la masa de estos eventos celestes.
+
+```{r}
+#| code-fold: true
+
+#Crear mapa
+ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group)) +
+  geom_point(data = df, aes(x = reclong, y = reclat, color = fall, size = log_masa), alpha = 0.15) +
+  scale_color_manual(values = c("Fell" = "#9AFF9A", "Found" = "#FF1493")) +
+  theme(legend.position = c(0.9, 0.5)) +
+  labs(size = 'masa(log10)')
+```
+
+
+### Distribución Meteoritos Aterrizados según Siglo y Tipo 🌎
+
+Aquí nos enfocaremos en la distribución geográfica de los meteoritos aterrizados, pero esta vez analizaremos cómo se relaciona con el siglo en que ocurrieron y su tipo.
+
+::: {.panel-tabset}
+
+#### Siglo XIX
+```{r}
+#| code-fold: true
+
+#Crear mapa
+ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group)) +
+  geom_point(data = df[substring(df$year, 1, 2) == "18", ], aes(x = reclong, y = reclat, color = factor(fall), size = log_masa), alpha = 0.2) +
+  scale_color_manual(values = c("Fell" = "#9AFF9A", "Found" = "#FF1493")) +
+  theme(legend.position = c(0.9, 0.5)) +
+  labs(size = 'masa(log10)')
+
+```
+
+#### Siglo XX
+```{r}
+#| code-fold: true
+
+#Crear mapa
+ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group)) +
+  geom_point(data = df[substring(df$year, 1, 2) == "19", ], aes(x = reclong, y = reclat, color = factor(fall), size = log_masa), alpha = 0.2) +
+  scale_color_manual(values = c("Fell" = "#9AFF9A", "Found" = "#FF1493")) +
+  theme(legend.position = c(0.9, 0.5)) +
+  labs(size = 'masa(log10)')
+
+```
+
+
+#### Siglo XXI
+```{r}
+#| code-fold: true
+
+#Crear mapa
+ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group)) +
+  geom_point(data = df[substring(df$year, 1, 2) == "20", ], aes(x = reclong, y = reclat, color = factor(fall), size = log_masa), alpha = 0.2) +
+  scale_color_manual(values = c("Fell" = "#9AFF9A", "Found" = "#FF1493")) +
+  theme(legend.position = c(0.9, 0.5)) +
+  labs(size = 'masa(log10)')
+
+```
+:::
+
+A través de estos mapas por siglos, podemos observar patrones interesantes en la distribución geográfica de meteoritos. En el siglo XIX, la mayoría de los meteoritos observados fueron registrados en Europa, mientras que los encontrados fueron principalmente en América. En el siglo XX, observamos un cambio con la mayoría de los meteoritos observados en Europa, África y Asia, pero la mayoría de los meteoritos encontrados aún se registraron en América. En este último siglo, la distribución se ha vuelto más equitativa, extendiéndose alrededor del mundo, lo que sugiere una participación más global en la observación y recuperación de meteoritos.
+
+### Meteoritos Aterrizados en 2003 (Mapas Markers) 📍
+
+En esta sección, nos centraremos en los meteoritos aterrizados en el año 2003. Este año ha sido seleccionado debido a que registra el mayor número de aterrizajes. Nos enfocaremos específicamente en aquellos meteoritos que han sido encontrados y de los cuales disponemos de su geolocalización para obtener una visualización detallada de estos eventos celestes.
+
+```{r}
+#| code-fold: true
+
+#Filtrar
+dfmapas <- df %>%
+  filter(fall == "Found" & year == 2003 & !is.na(reclat) & !is.na(reclong))
+```
+
+::: {.panel-tabset}
+
+#### Mundo
+```{r}
+#| code-fold: true
+
+#Crear mapa
+mundo_1 <- dfmapas %>%
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers(
+    lng = ~reclong,
+    lat = ~reclat,
+    popup = ~paste("Nombre: ", name, "<br>",
+                   "Tipo: ", recclass, "<br>",
+                   "Masa: ", mass..g., "g")
+  )
+mundo_1
+```
+
+
+#### Europa
+```{r}
+#| code-fold: true
+
+#Crear mapa
+europa <- dfmapas %>%
+  filter(reclat >= 35 & reclat <= 70 & reclong >= -25 & reclong <= 45)
+
+europa_1 <- europa %>%
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers(
+    lng = ~reclong,
+    lat = ~reclat,
+    popup = ~paste("Nombre: ", name, "<br>",
+                   "Tipo: ", recclass, "<br>",
+                   "Masa: ", mass..g., "g")
+  )%>%
+  setView(lng = 10, lat = 50, zoom = 3) 
+
+europa_1
+```
+#### España
+```{r}
+#| code-fold: true
+
+#Crear mapa
+spain <- dfmapas %>%
+  filter(reclat >= 35 & reclat <= 43 & reclong >= -9 & reclong <= 4)
+
+spain_1 <- spain %>%
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers(
+    lng = ~reclong,
+    lat = ~reclat,
+    popup = ~paste("Nombre: ", name, "<br>",
+                   "Tipo: ", recclass, "<br>",
+                   "Masa: ", mass..g., "g")
+  )%>%
+  setView(lng = -4, lat = 40, zoom = 5) 
+
+spain_1
+```
+:::
+
+Como podemos observar en estos tres mapas, el año 2003 registró numerosos aterrizajes meteoríticos en todo el mundo. Sin embargo, resulta notable que, en Europa, solo se identificaron tres de estos eventos y ninguno de ellos tuvo lugar en España. Esta observación resalta la variabilidad geográfica de estos fenómenos celestes durante este año específico.
+
+## Conclusión 🚀
+
+A través de los análisis realizados en los datos de meteoritos, se ha observado una variabilidad significativa en la distribución geográfica de estos eventos celestes a lo largo del tiempo. En el siglo XIX, Europa fue testigo de la mayoría de los meteoritos observados, mientras que la mayoría de los encontrados se registraron en América. A medida que avanzamos en el siglo XX, la observación de meteoritos se expandió a Europa, África y Asia, aunque la mayoría de los meteoritos encontrados continuaron siendo reportados en América. En el siglo XXI, la distribución se ha vuelto más equitativa en todo el mundo.
+
+El análisis específico del año 2003 reveló un alto número de aterrizajes meteoríticos a nivel global, pero en Europa,la presencia fue limitada, destacando la variabilidad geográfica de estos eventos incluso en años de alta actividad.
+
+En general, estos resultados resaltan la importancia de considerar la geografía y el tiempo al estudiar los fenómenos meteoríticos, mostrando cómo la observación y recuperación de meteoritos han evolucionado y se han distribuido de manera diversa a lo largo de los siglos.
+
+![Generada con IA-1](./imagenes/IA1.png)
+
+![Generada con IA-2](./imagenes/IA2.png)
