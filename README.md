@@ -15,7 +15,7 @@ La versión final del trabajo puede visualizarse en: <https://ctorm27.github.io/
 
 Hola, soy Cristina.
       
-Esta web sirve para presentar el trabajo en equipo de la asignatura "Programación y manejo de datos en la era del Big Data", optativa de GECO en la Facultad de Economía de la Universitat de València.
+Esta web sirve para presentar el trabajo individual de la asignatura "Programación y manejo de datos en la era del Big Data", optativa de GECO en la Facultad de Economía de la Universitat de València.
 
 Puedes encontrar la web de la asignatura [aquí](https://perezp44.github.io/intro-ds-23-24-web/) y los trabajos de mis compañeros de curso puedes verlos [aquí](https://perezp44.github.io/intro-ds-23-24-web/05-trabajos-estudiantes.html).
 
