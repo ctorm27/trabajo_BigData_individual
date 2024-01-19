@@ -17,7 +17,7 @@ Hola, soy Cristina.
       
 Esta web sirve para presentar el trabajo en equipo de la asignatura "Programación y manejo de datos en la era del Big Data", optativa de GECO en la Facultad de Economía de la Universitat de València.
 
-Puedes encontrar la web de la asignatura [aquí](https://perezp44.github.io/intro-ds-23-24-web/){target="_blank"} y los trabajos de mis compañeros de curso puedes verlos [aquí](https://perezp44.github.io/intro-ds-23-24-web/05-trabajos-estudiantes.html){target="_blank"}.
+Puedes encontrar la web de la asignatura [aquí](https://perezp44.github.io/intro-ds-23-24-web/) y los trabajos de mis compañeros de curso puedes verlos [aquí](https://perezp44.github.io/intro-ds-23-24-web/05-trabajos-estudiantes.html).
 
 Este trabajo se titula "Aterrizajes Meteoríticos". Con el, pretendo explorar datos detallados sobre meteoritos, desde sus nombres y tipos hasta sus masas, fechas y ubicaciones geográficas, intentando aprovechar las herramientas y técnicas de Big Data para revelar insights valiosos sobre estos aterrizajes desde una perspectiva más analítica y práctica. El objetivo final es, por tanto, identificar tendencias, relaciones o características únicas que puedan ser de interés.
 
