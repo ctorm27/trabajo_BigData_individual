@@ -74,6 +74,8 @@ library(rnaturalearth)
 file_path <- "Meteorite_Landings.csv"
 df <- read.csv(file_path, stringsAsFactors = FALSE)
 
+str(df)
+
 ```
 
 ## Trabajemos con los datos 📂
@@ -110,7 +112,7 @@ Esto muestra una tabla que indica que hay 75 meteoritos de tipo "Relicto" y 4564
 
 ### Tipos de observaciones 🔭
 
-Podemos observar que tenemos dos tipos de observaciones(*fall*): 
+Podemos observar que tenemos dos tipos de observaciones (*fall*): 
 
 1.**Caído** (*Fell*): indica que la caída del meteorito fue observada.
 
@@ -575,7 +577,7 @@ mundo <- map_data('world')
 head(mundo)
 ggplot() +
   geom_polygon(data=world, aes(x=long, y=lat, group=group)) +
-  geom_point(data=df, aes(x=reclong, y=reclat), color ='purple', alpha=0.2)
+  geom_point(data=df, aes(x=reclong, y=reclat), col='purple', alpha=.2)
 ```
 
 ### Distribución Meteoritos Aterrizados según Tipo y Masa 🌍
@@ -746,6 +748,4 @@ Inspiración para el trabajo:
 
 - [Github](https://github.com/Guangtufan/Meteorite)
 
-- [Github] (https://github.com/majvdvel/meteorites)
-
-
+- [Github](https://github.com/majvdvel/meteorites)
